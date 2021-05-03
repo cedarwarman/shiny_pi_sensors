@@ -1,0 +1,11 @@
+name: sensor_home
+title:
+username:
+account: cedarwarman
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 4067536
+bundleId: 4548149
+url: https://cedarwarman.shinyapps.io/sensor_home/
+when: 1620002594.36354
+lastSyncTime: 1620002594.36356
