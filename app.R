@@ -14,7 +14,11 @@ library(styler)
 
 # Importing the data from a Google sheet
 gs4_deauth()
-sheet_address <- "https://docs.google.com/spreadsheets/d/1v0W5jSeF_wNWV9JCeZlG_zNOOsADDlPmwQSymcgLEJQ/edit?usp=sharing"
+# home
+# sheet_address <- "https://docs.google.com/spreadsheets/d/1v0W5jSeF_wNWV9JCeZlG_zNOOsADDlPmwQSymcgLEJQ/edit?usp=sharing"
+# lab
+sheet_address <- "https://docs.google.com/d/1Byxkjq1Jl_O6cyOrBp6yO_vHAI4FSbJkKZetLsOhwZc/edit?usp=sharing"
+
 mesquite <- read_sheet(sheet_address)
 
 # Making a single column for date and time
@@ -24,10 +28,16 @@ mesquite$date_time <- ymd_hms(paste(mesquite$date, mesquite$time))
 mesquite$date <- ymd(mesquite$date)
 
 # Getting the current temp
-current_temp <- mesquite$temp_f[nrow(mesquite)]
+current_temp <- mesquite$temp_c[nrow(mesquite)]
 
-# Getting the current humidity
+# Getting the current husmidity
 current_humidity <- mesquite$humidity[nrow(mesquite)]
+
+# Getting the current time string
+current_time <- paste(toString(mesquite$date[nrow(mesquite)]),
+                      "at",
+                      toString(mesquite$time[nrow(mesquite)]),
+                      sep = " ")
 
 # Making an app -----------------------------------------------------------
 
@@ -48,6 +58,11 @@ ui <- fillPage(
         color: #42ff55;
         font-size: 24px;
         font-weight: bold;
+      }
+      #current_time {
+        color: #ffffff;
+        font-size: 24px;
+        font-weight: bold;
       }"))
   ),
   
@@ -57,15 +72,18 @@ ui <- fillPage(
   tags$style(HTML("#temp_plot {height: calc(50vh - 40px) !important;}
                   #humidity_plot {height: calc(50vh - 40px) !important;}")),
   
-  
   fluidRow(
     column(
-      5, offset = 2, align = "center",
+      3, offset = 2, align = "center",
       textOutput("current_temp")
     ),
     column(
-      5, align = "center",
+      3, align = "center",
       textOutput("current_humidity")
+    ),
+    column(
+      4, align = "center",
+      textOutput("current_time")
     )
   ),
   fluidRow(
@@ -108,10 +126,10 @@ server <- function(input, output, session) {
   
   output$temp_plot <- renderPlotly({
     ggplotly(selected() %>%
-               ggplot(aes(date_time, temp_f)) +
+               ggplot(aes(date_time, temp_c)) +
                # geom_smooth(method = "loess", se = FALSE, span = 0.01, color = "white", size = 0.5) +
                geom_point(size = 0.5, shape = 16, alpha = 0.8, color = "#ff6bd3") +
-               labs(x = "", y = "ºF") +
+               labs(x = "", y = "ºC") +
                theme_bw() +
                theme(
                  panel.border = element_blank(),
@@ -147,11 +165,15 @@ server <- function(input, output, session) {
   })
   
   output$current_temp <- renderText({
-    paste("The current temperature is ", current_temp, " ºF")
+    paste0("Current temperature: ", current_temp, " ºC")
   })
   
   output$current_humidity <- renderText({
-    paste("The current humidity is ", current_humidity, "%")
+    paste0("Current humidity: ", current_humidity, "%")
+  })
+  
+  output$current_time <- renderText({
+    paste0("Updated ", current_time)
   })
 }
 
