@@ -10,34 +10,44 @@ library(shinyWidgets)
 library(styler)
 
 
-# Importing and looking at the data ---------------------------------------
 
-# Importing the data from a Google sheet
-gs4_deauth()
-# home
-# sheet_address <- "https://docs.google.com/spreadsheets/d/1v0W5jSeF_wNWV9JCeZlG_zNOOsADDlPmwQSymcgLEJQ/edit?usp=sharing"
-# lab
-sheet_address <- "https://docs.google.com/d/1Byxkjq1Jl_O6cyOrBp6yO_vHAI4FSbJkKZetLsOhwZc/edit?usp=sharing"
 
-mesquite <- read_sheet(sheet_address)
+# Functions ---------------------------------------------------------------
 
-# Making a single column for date and time
-mesquite$date_time <- ymd_hms(paste(mesquite$date, mesquite$time))
+# This function will run to import data whenever the user switches sensors
+# or datasets from the two dropdown menus.
+import_dataset <- function(sheet_id){
+  # Avoiding permissions (make sure sheet is public)
+  gs4_deauth()
+  df <- read_sheet(sheet_id)
+  
+  # Making a single column for date and time
+  df$date_time <- ymd_hms(paste(df$date, df$time))
+  # Changing the data column from a string to date type
+  df$date <- ymd(df$date)
+  
+  return(df)
+}
 
-# Changing the data column from a string to date type
-mesquite$date <- ymd(mesquite$date)
+# # This function gets the current temp, humidity, and time for the header.
+# get_current_stats <- function(input_sheet){
+#   # Getting the current temp
+#   current_temp <- input_sheet$temp_c[nrow(input_sheet)]
+#   
+#   # Getting the current humidity
+#   current_humidity <- input_sheet$humidity[nrow(input_sheet)]
+#   
+#   # Getting the current time string
+#   current_time <- paste(toString(input_sheet$date[nrow(input_sheet)]),
+#                         "at",
+#                         toString(input_sheet$time[nrow(input_sheet)]),
+#                         sep = " ")
+#   
+#   output_list <- list(current_temp, current_humidity, current_time)
+#   names(output_list) <- c("temp", "humidity", "time")
+#   return(output_list)
+# }
 
-# Getting the current temp
-current_temp <- mesquite$temp_c[nrow(mesquite)]
-
-# Getting the current husmidity
-current_humidity <- mesquite$humidity[nrow(mesquite)]
-
-# Getting the current time string
-current_time <- paste(toString(mesquite$date[nrow(mesquite)]),
-                      "at",
-                      toString(mesquite$time[nrow(mesquite)]),
-                      sep = " ")
 
 # Making an app -----------------------------------------------------------
 
@@ -89,20 +99,24 @@ ui <- fillPage(
   fluidRow(
     column(
       2,
-      # Lets the user pick the date that the plot shows
-      sliderInput("chosen_date", "Date",
-                  min = min(mesquite$date),
-                  max = max(mesquite$date),
-                  value = c(
-                    min(mesquite$date),
-                    max(mesquite$date)
-                  )
-      ),
-      sliderInput("chosen_interval", "Sample interval (min)",
-                  min = 1,
-                  max = 20,
-                  value = 5
-      )
+      # Lets the user choose the sensor to display
+      selectInput("sensor", "Sensor", 
+                  c("Forbes East", "Forbes West", "Marley 1", "Marley 2")
+      )#,
+      # # Lets the user pick the date that the plot shows
+      # sliderInput("chosen_date", "Date",
+      #             min = min(mesquite$date),
+      #             max = max(mesquite$date),
+      #             value = c(
+      #               min(mesquite$date),
+      #               max(mesquite$date)
+      #             )
+      # ),
+      # sliderInput("chosen_interval", "Sample interval (min)",
+      #             min = 1,
+      #             max = 20,
+      #             value = 5
+      # )
     ),
     column(
       10,
@@ -119,10 +133,35 @@ ui <- fillPage(
 )
 
 server <- function(input, output, session) {
-  selected <- reactive(mesquite %>%
-                         filter(row_number() %% input$chosen_interval == 0) %>%
-                         filter(date >= input$chosen_date[1] &
-                                  date <= input$chosen_date[2]))
+  # Importing the correct dataset
+  selected <- reactive({
+    if (input$sensor == "Forbes East"){
+      dataset <- import_dataset("1Vn5eo55o_ABrSc9ekSKeelteE-NmFAAeg8tsUIR_9JA")
+    }
+    else if (input$sensor == "Forbes West"){
+      dataset <- import_dataset("1y4H7i5Ay6bmXjTwesw4RoBO3nNCprKDssm3WPZ-BuuQ")
+    }
+    else if (input$sensor == "Marley 1"){
+      dataset <- import_dataset("1cF2DWhlWZ6CYsZU7B6akx4X9EFrqh33oHst0ZKH6AYA")
+    }
+    else if (input$sensor == "Marley 2"){
+      dataset <- import_dataset("1T4WOJAhyQWPGwmT65P76vGczjl4_2LVEhvAzhqwzcrw")
+    }
+    return(dataset)
+  })
+  
+  # Getting the current stats for the selected datasheet
+  current_temp <- reactive(selected()$temp_c[nrow(selected())])
+  current_humidity <- reactive(selected()$humidity[nrow(selected())])
+  current_time <- reactive(paste(toString(selected()$date[nrow(selected())]),
+                        "at",
+                        toString(selected()$time[nrow(selected())]),
+                        sep = " "))
+  
+  # selected <- reactive(input_dataset %>%
+  #                        filter(row_number() %% input$chosen_interval == 0) %>%
+  #                        filter(date >= input$chosen_date[1] &
+  #                                 date <= input$chosen_date[2]))
   
   output$temp_plot <- renderPlotly({
     ggplotly(selected() %>%
@@ -165,15 +204,15 @@ server <- function(input, output, session) {
   })
   
   output$current_temp <- renderText({
-    paste0("Current temperature: ", current_temp, " ºC")
+    paste0("Current temperature: ", current_temp(), " ºC")
   })
   
   output$current_humidity <- renderText({
-    paste0("Current humidity: ", current_humidity, "%")
+    paste0("Current humidity: ", current_humidity(), "%")
   })
   
   output$current_time <- renderText({
-    paste0("Updated ", current_time)
+    paste0("Updated: ", current_time())
   })
 }
 
