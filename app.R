@@ -9,7 +9,10 @@ library(thematic)
 library(shinyWidgets)
 library(styler)
 
-
+# For problems:
+# library(reactlog)
+# reactlog_Enable()
+# reactlogShow()
 
 
 # Functions ---------------------------------------------------------------
@@ -101,8 +104,8 @@ ui <- fillPage(
       2,
       # Lets the user choose the sensor to display
       selectInput("sensor", "Sensor", 
-                  c("Forbes East", "Forbes West", "Marley 1", "Marley 2")
-      )#,
+                  c("Forbes East", "Forbes West", "Marley Kelsey", "Marley Cedar")
+      ),
       # # Lets the user pick the date that the plot shows
       # sliderInput("chosen_date", "Date",
       #             min = min(mesquite$date),
@@ -112,11 +115,13 @@ ui <- fillPage(
       #               max(mesquite$date)
       #             )
       # ),
-      # sliderInput("chosen_interval", "Sample interval (min)",
-      #             min = 1,
-      #             max = 20,
-      #             value = 5
-      # )
+      # Lets the user pick a data sampling interval
+      sliderInput("chosen_interval", "Sample interval (min)",
+                  min = 2, # Fix this, it's actually doing every 4 minutes since the natural interval is now 2
+                  max = 20,
+                  value = 4,
+                  step = 2
+      )
     ),
     column(
       10,
@@ -141,14 +146,20 @@ server <- function(input, output, session) {
     else if (input$sensor == "Forbes West"){
       dataset <- import_dataset("1y4H7i5Ay6bmXjTwesw4RoBO3nNCprKDssm3WPZ-BuuQ")
     }
-    else if (input$sensor == "Marley 1"){
+    else if (input$sensor == "Marley Kelsey"){
       dataset <- import_dataset("1cF2DWhlWZ6CYsZU7B6akx4X9EFrqh33oHst0ZKH6AYA")
     }
-    else if (input$sensor == "Marley 2"){
+    else if (input$sensor == "Marley Cedar"){
       dataset <- import_dataset("1T4WOJAhyQWPGwmT65P76vGczjl4_2LVEhvAzhqwzcrw")
     }
     return(dataset)
   })
+  
+  # Filtering by selected interval
+  filtered <- reactive(selected() %>%
+                         # Change this to "input$chosen_interval == 0" if 
+                         # spreadsheet time interval is 1 instead of 2
+                         filter(row_number() %% (input$chosen_interval / 2) == 0))
   
   # Getting the current stats for the selected datasheet
   current_temp <- reactive(selected()$temp_c[nrow(selected())])
@@ -164,7 +175,7 @@ server <- function(input, output, session) {
   #                                 date <= input$chosen_date[2]))
   
   output$temp_plot <- renderPlotly({
-    ggplotly(selected() %>%
+    ggplotly(filtered() %>%
                ggplot(aes(date_time, temp_c)) +
                # geom_smooth(method = "loess", se = FALSE, span = 0.01, color = "white", size = 0.5) +
                geom_point(size = 0.5, shape = 16, alpha = 0.8, color = "#ff6bd3") +
@@ -184,7 +195,7 @@ server <- function(input, output, session) {
   })
   
   output$humidity_plot <- renderPlotly({
-    ggplotly(selected() %>%
+    ggplotly(filtered() %>%
                ggplot(aes(date_time, humidity)) +
                # geom_smooth(method = "loess", se = FALSE, span = 0.01, color = "white", size = 0.5) +
                geom_point(size = 0.5, shape = 16, alpha = 0.8, color = "#42ff55") +
@@ -206,11 +217,11 @@ server <- function(input, output, session) {
   output$current_temp <- renderText({
     paste0("Current temperature: ", current_temp(), " ºC")
   })
-  
+
   output$current_humidity <- renderText({
     paste0("Current humidity: ", current_humidity(), "%")
   })
-  
+
   output$current_time <- renderText({
     paste0("Updated: ", current_time())
   })
