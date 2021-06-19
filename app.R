@@ -14,6 +14,9 @@ library(styler)
 # reactlog_Enable()
 # reactlogShow()
 
+# For Raspberry Pi, uncomment this:
+options(bitmapType='cairo')
+
 
 # Functions ---------------------------------------------------------------
 
@@ -88,7 +91,7 @@ ui <- fillPage(
   fluidRow(
     column(
       3, offset = 2, align = "center",
-      textOutput("current_temp")
+      uiOutput("current_temp")
     ),
     column(
       3, align = "center",
@@ -214,7 +217,7 @@ server <- function(input, output, session) {
       config(displayModeBar = FALSE)
   })
   
-  output$current_temp <- renderText({
+  output$current_temp <- renderUI({
     paste0("Current temperature: ", current_temp(), " ºC")
   })
 
