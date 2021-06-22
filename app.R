@@ -124,6 +124,10 @@ ui <- fillPage(
                   max = 20,
                   value = 4,
                   step = 2
+      ),
+      actionButton(
+        inputId = "refresh_data",
+        label = "Refresh data"
       )
     ),
     column(
@@ -142,7 +146,7 @@ ui <- fillPage(
 
 server <- function(input, output, session) {
   # Importing the correct dataset
-  selected <- reactive({
+  selected <- eventReactive(c(input$refresh_data, input$sensor), {
     if (input$sensor == "Forbes East"){
       dataset <- import_dataset("1Vn5eo55o_ABrSc9ekSKeelteE-NmFAAeg8tsUIR_9JA")
     }
@@ -156,7 +160,7 @@ server <- function(input, output, session) {
       dataset <- import_dataset("1T4WOJAhyQWPGwmT65P76vGczjl4_2LVEhvAzhqwzcrw")
     }
     return(dataset)
-  })
+  }, ignoreNULL=FALSE)
   
   # Filtering by selected interval
   filtered <- reactive(selected() %>%
