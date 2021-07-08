@@ -10,8 +10,8 @@ library(shinyWidgets)
 library(styler)
 
 # For problems:
-library(reactlog)
-reactlog_enable()
+# library(reactlog)
+# reactlog_enable()
 # reactlogShow()
 # reactlogReset()
 
@@ -35,25 +35,6 @@ import_dataset <- function(sheet_id){
   
   return(df)
 }
-
-# # This function gets the current temp, humidity, and time for the header.
-# get_current_stats <- function(input_sheet){
-#   # Getting the current temp
-#   current_temp <- input_sheet$temp_c[nrow(input_sheet)]
-#   
-#   # Getting the current humidity
-#   current_humidity <- input_sheet$humidity[nrow(input_sheet)]
-#   
-#   # Getting the current time string
-#   current_time <- paste(toString(input_sheet$date[nrow(input_sheet)]),
-#                         "at",
-#                         toString(input_sheet$time[nrow(input_sheet)]),
-#                         sep = " ")
-#   
-#   output_list <- list(current_temp, current_humidity, current_time)
-#   names(output_list) <- c("temp", "humidity", "time")
-#   return(output_list)
-# }
 
 
 # Making an app -----------------------------------------------------------
@@ -84,8 +65,6 @@ ui <- fillPage(
   ),
   
   # CSS for making the plots fit the page vertically
-  # tags$style(HTML("#temp_plot {height: calc(50vh - 80px) !important;}
-  #                 #humidity_plot {height: calc(50vh - 80px) !important;}")),
   tags$style(HTML("#temp_plot {height: calc(50vh - 40px) !important;}
                   #humidity_plot {height: calc(50vh - 40px) !important;}")),
   
@@ -106,20 +85,16 @@ ui <- fillPage(
   fluidRow(
     column(
       2,
-      # Lets the user choose the sensor to display
+      # Lets the user choose the sensor to display (lab)
       selectInput("sensor", "Sensor", 
                   c("Forbes East", "Forbes West", "Marley Kelsey", "Marley Cedar")
       ),
+      # # Lets the user choose the sensor to display (home)
+      # selectInput("sensor", "Sensor", 
+      #             c("Livingroom", "Outside")
+      # ),
       # Lets the user pick the date that the plot shows
       uiOutput("date_slider"),
-      # sliderInput("chosen_date", "Date",
-      #             min = min(mesquite$date),
-      #             max = max(mesquite$date),
-      #             value = c(
-      #               min(mesquite$date),
-      #               max(mesquite$date)
-      #             )
-      # ),
       # Lets the user pick a data sampling interval
       sliderInput("chosen_interval", "Sample interval (min)",
                   min = 2, # Fix this, it's actually doing every 4 minutes since the natural interval is now 2
@@ -147,7 +122,7 @@ ui <- fillPage(
 )
 
 server <- function(input, output, session) {
-  # Importing the correct dataset
+  # Importing the correct dataset (lab)
   selected <- eventReactive(c(input$refresh_data, input$sensor), {
     if (input$sensor == "Forbes East"){
       dataset <- import_dataset("1Vn5eo55o_ABrSc9ekSKeelteE-NmFAAeg8tsUIR_9JA")
@@ -162,7 +137,18 @@ server <- function(input, output, session) {
       dataset <- import_dataset("1T4WOJAhyQWPGwmT65P76vGczjl4_2LVEhvAzhqwzcrw")
     }
     return(dataset)
-  }, ignoreNULL=FALSE, label = "Selected sensor") # Is this really necessary?
+  }, ignoreNULL=FALSE, label = "Selected sensor")
+  
+  # # Importing the correct dataset (home)
+  # selected <- eventReactive(c(input$refresh_data, input$sensor), {
+  #   if (input$sensor == "Livingroom"){
+  #     dataset <- import_dataset("1pb0uU-8VST4gp8zkbDiO0YNfAKdsnvoKgLZ63juG27I")
+  #   }
+  #   else if (input$sensor == "Outside"){
+  #     dataset <- import_dataset("1ELcNVhti0JHUYfMLyu9pRZ_hoGN8uQ-Y8WViw9TLz8Q")
+  #   }
+  #   return(dataset)
+  # }, ignoreNULL=FALSE, label = "Selected sensor")
   
   # Making the date slider output
   output$date_slider <- renderUI({
