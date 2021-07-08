@@ -10,9 +10,10 @@ library(shinyWidgets)
 library(styler)
 
 # For problems:
-# library(reactlog)
-# reactlog_Enable()
+library(reactlog)
+reactlog_enable()
 # reactlogShow()
+# reactlogReset()
 
 # For Raspberry Pi, uncomment this:
 options(bitmapType='cairo')
@@ -109,7 +110,8 @@ ui <- fillPage(
       selectInput("sensor", "Sensor", 
                   c("Forbes East", "Forbes West", "Marley Kelsey", "Marley Cedar")
       ),
-      # # Lets the user pick the date that the plot shows
+      # Lets the user pick the date that the plot shows
+      uiOutput("date_slider"),
       # sliderInput("chosen_date", "Date",
       #             min = min(mesquite$date),
       #             max = max(mesquite$date),
@@ -160,13 +162,28 @@ server <- function(input, output, session) {
       dataset <- import_dataset("1T4WOJAhyQWPGwmT65P76vGczjl4_2LVEhvAzhqwzcrw")
     }
     return(dataset)
-  }, ignoreNULL=FALSE)
+  }, ignoreNULL=FALSE, label = "Selected sensor") # Is this really necessary?
   
-  # Filtering by selected interval
-  filtered <- reactive(selected() %>%
-                         # Change this to "input$chosen_interval == 0" if 
-                         # spreadsheet time interval is 1 instead of 2
-                         filter(row_number() %% (input$chosen_interval / 2) == 0))
+  # Making the date slider output
+  output$date_slider <- renderUI({
+    sliderInput("chosen_date", "Date", 
+                min = min(selected()$date),
+                max = max(selected()$date),
+                value = c(max(selected()$date) - 2, max(selected()$date))
+                
+    )
+  })
+  
+  # Filtering by interval and date
+  filtered <- reactive({
+    shiny::validate(need(input$chosen_date, message=FALSE)) # Necessary so that the initial 'null' of the date slider doesn't fuck it up
+    (selected() %>%
+       # Change this to "input$chosen_interval == 0" if 
+       # spreadsheet time interval is 1 instead of 2
+       filter(row_number() %% (input$chosen_interval / 2) == 0) %>%
+       filter(date >= input$chosen_date[1] &
+              date <= input$chosen_date[2]))
+  }, label = "Filtered by date / interval")
   
   # Getting the current stats for the selected datasheet
   current_temp <- reactive(selected()$temp_c[nrow(selected())])
@@ -175,11 +192,6 @@ server <- function(input, output, session) {
                         "at",
                         toString(selected()$time[nrow(selected())]),
                         sep = " "))
-  
-  # selected <- reactive(input_dataset %>%
-  #                        filter(row_number() %% input$chosen_interval == 0) %>%
-  #                        filter(date >= input$chosen_date[1] &
-  #                                 date <= input$chosen_date[2]))
   
   output$temp_plot <- renderPlotly({
     ggplotly(filtered() %>%
@@ -220,15 +232,14 @@ server <- function(input, output, session) {
                )) %>%
       config(displayModeBar = FALSE)
   })
-  
+
+  # Making the "Current temp, humidity, time" banner
   output$current_temp <- renderUI({
     paste0("Current temperature: ", current_temp(), " ºC")
   })
-
   output$current_humidity <- renderText({
     paste0("Current humidity: ", current_humidity(), "%")
   })
-
   output$current_time <- renderText({
     paste0("Updated: ", current_time())
   })
