@@ -5,4 +5,4 @@ Shiny app for my lab and home temperature and humidity sensors. Sensor data is f
 http://cedarwarman.duckdns.org:3838/pi_sensor_home/
 
 ## Lab
-http://cedarwarman.duckdns.org:3838/pi_sensor_lab/
+http://cedarwarman.duckdns.org:3838/pi_sensor/
