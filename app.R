@@ -36,6 +36,165 @@ import_dataset <- function(sheet_id){
   return(df)
 }
 
+# This function will make a temperature plot
+make_temp_plot <- function(input_df){
+  output_plot <- ggplotly(input_df %>%
+               ggplot(aes(date_time, temp_c)) +
+               # geom_smooth(method = "loess", se = FALSE, span = 0.01, color = "white", size = 0.5) +
+               geom_point(size = 0.5, shape = 16, alpha = 0.8, color = "#ff6bd3") +
+               labs(x = "", y = "ºC") +
+               theme_bw() +
+               theme(
+                 panel.border = element_blank(),
+                 axis.line = element_line(color = "white", size = 1),
+                 panel.grid = element_blank(),
+                 axis.ticks = element_line(color = "white", size = 1),
+                 axis.text = element_text(size = 10, face = "bold", color = "white"),
+                 axis.title = element_text(size = 14, face = "bold", color = "white"),
+                 panel.background = element_rect(fill = "#222222"),
+                 plot.background = element_rect(fill = "#222222")
+               )) %>%
+      config(displayModeBar = FALSE)
+  
+  return(output_plot)
+}
+
+# This function will make a temperature plot with downtime highlighted
+make_temp_plot_downtime <- function(input_df, original_df){
+  # Calculating intervals between sensor readings on the original selected() df 
+  # so that they won't be affected by changes in the interval slider. First 
+  # cropping the original df to match the filtered() df (here input_df)
+  cropped_df <- original_df %>%
+    filter(date >= min(input_df$date) &
+           date <= max(input_df$date))
+  
+  # Sorting. Note: because of time inaccuracy, intervals shorter than ~10 minutes
+  # probably aren't accurate (blame UA for blocking NTP port 123 and making me 
+  # use htpdate...)
+  cropped_df <- cropped_df[order(cropped_df$date_time), ]
+  
+  # Calculating intervals
+  cropped_df$intervals <- as.integer(difftime(cropped_df$date_time, 
+                                              lag(cropped_df$date_time,),
+                                              units = "mins"))
+
+  # Making the downtime rectangles
+  cat(file = stderr(), "\n", "Making dataframe, xmins = ", toString(na.omit(cropped_df$date_time[lead(cropped_df$intervals > 4)])), "\n",
+          "xmaxes = ", toString(na.omit(cropped_df$date_time[cropped_df$intervals > 4])), "\n",
+          "ymins = ", toString(min(cropped_df$temp_c)), "\n",
+          "ymaxes = ", toString(max(cropped_df$temp_c)))
+  if (length(na.omit(cropped_df$date_time[lead(cropped_df$intervals > 4)])) > 0) {
+    rectangles <- data.frame(
+      "xmins" = na.omit(cropped_df$date_time[lead(cropped_df$intervals > 4)]),
+      "xmaxes" = na.omit(cropped_df$date_time[cropped_df$intervals > 4]),
+      "ymins" = min(cropped_df$temp_c),
+      "ymaxes" = max(cropped_df$temp_c)
+    )
+    
+    # Making the plot with rectangles
+    output_plot <- ggplotly(input_df %>%
+                              ggplot(aes(date_time, temp_c)) +
+                              # geom_smooth(method = "loess", se = FALSE, span = 0.01, color = "white", size = 0.5) +
+                              geom_rect(data = rectangles, 
+                                        inherit.aes = FALSE, 
+                                        aes(xmin = xmins, 
+                                            xmax = xmaxes, 
+                                            ymin = ymins, 
+                                            ymax = ymaxes), 
+                                        fill = "orangered3") +
+                              geom_point(size = 0.5, shape = 16, alpha = 0.8, color = "#ff6bd3") +
+                              labs(x = "", y = "ºC") +
+                              theme_bw() +
+                              theme(
+                                panel.border = element_blank(),
+                                axis.line = element_line(color = "white", size = 1),
+                                panel.grid = element_blank(),
+                                axis.ticks = element_line(color = "white", size = 1),
+                                axis.text = element_text(size = 10, face = "bold", color = "white"),
+                                axis.title = element_text(size = 14, face = "bold", color = "white"),
+                                panel.background = element_rect(fill = "#222222"),
+                                plot.background = element_rect(fill = "#222222")
+                              )) %>%
+      config(displayModeBar = FALSE)
+    
+    return(output_plot)
+    
+  } else {
+    # If there are no downtimes, it just makes a regular plot
+    output_plot <- make_temp_plot(input_df)
+    return(output_plot)
+  }
+  
+  # # Debugging message
+  # # cat(file = stderr(), "intervals = ", input_df$intervals, "\n")
+  # cat(file = stderr(), "rectangle xmins = ", toString(rectangles$xmins), "\n",
+  #     "rectangle xmaxes = ", toString(rectangles$xmaxes), "\n")
+  # cat(file = stderr(), "rectangle ymins = ", toString(rectangles$ymins), "\n",
+  #     "rectangle ymaxes = ", toString(rectangles$ymaxes), "\n")
+  # rectangles <- data.frame(
+  #   "xmins" = c(ymd_hms("2021-07-13T14:00:00"), ymd_hms("2021-07-14T14:00:00")),
+  #   "xmaxes" = c(ymd_hms("2021-07-13T16:00:00"), ymd_hms("2021-07-14T16:00:00")),
+  #   "ymins" = min(input_df$temp_c),
+  #   "ymaxes" = max(input_df$temp_c)
+  # )
+  
+  # Making the plot with rectangles
+  output_plot <- ggplotly(input_df %>%
+                            ggplot(aes(date_time, temp_c)) +
+                            # geom_smooth(method = "loess", se = FALSE, span = 0.01, color = "white", size = 0.5) +
+                            geom_rect(data = rectangles, 
+                                      inherit.aes = FALSE, 
+                                      aes(xmin = xmins, 
+                                          xmax = xmaxes, 
+                                          ymin = ymins, 
+                                          ymax = ymaxes), 
+                                          fill = "orangered3") +
+                            geom_point(size = 0.5, shape = 16, alpha = 0.8, color = "#ff6bd3") +
+                            labs(x = "", y = "ºC") +
+                            theme_bw() +
+                            theme(
+                              panel.border = element_blank(),
+                              axis.line = element_line(color = "white", size = 1),
+                              panel.grid = element_blank(),
+                              axis.ticks = element_line(color = "white", size = 1),
+                              axis.text = element_text(size = 10, face = "bold", color = "white"),
+                              axis.title = element_text(size = 14, face = "bold", color = "white"),
+                              panel.background = element_rect(fill = "#222222"),
+                              plot.background = element_rect(fill = "#222222")
+                            )) %>%
+    config(displayModeBar = FALSE)
+  
+  return(output_plot)
+}
+
+# This function will make a humidity plot
+make_humid_plot <- function(input_df){
+  output_plot <- ggplotly(input_df %>%
+             ggplot(aes(date_time, humidity)) +
+             # geom_smooth(method = "loess", se = FALSE, span = 0.01, color = "white", size = 0.5) +
+             geom_point(size = 0.5, shape = 16, alpha = 0.8, color = "#42ff55") +
+             labs(x = "Date and time", y = "% Humidity") +
+             theme_bw() +
+             theme(
+               panel.border = element_blank(),
+               axis.line = element_line(color = "white", size = 1),
+               panel.grid = element_blank(),
+               axis.ticks = element_line(color = "white", size = 1),
+               axis.text = element_text(size = 10, face = "bold", color = "white"),
+               axis.title = element_text(size = 14, face = "bold", color = "white"),
+               panel.background = element_rect(fill = "#222222"),
+               plot.background = element_rect(fill = "#222222")
+             )) %>%
+    config(displayModeBar = FALSE)
+  
+  return(output_plot)
+}
+
+# This function will make a humidity plot with downtime highlighted
+make_humid_plot_downtime <- function(input_df){
+  
+}
+
 
 # Making an app -----------------------------------------------------------
 
@@ -86,12 +245,12 @@ ui <- fillPage(
     column(
       2,
       # Lets the user choose the sensor to display (lab)
-      selectInput("sensor", "Sensor", 
+      selectInput("sensor", "Sensor",
                   c("Forbes East", "Forbes West", "Marley Kelsey", "Marley Cedar")
       ),
       # # Lets the user choose the sensor to display (home)
-      # selectInput("sensor", "Sensor", 
-      #             c("Livingroom", "Outside")
+      # selectInput("sensor", "Sensor",
+      #             c("Living room", "Outside")
       # ),
       # Lets the user pick the date that the plot shows
       uiOutput("date_slider"),
@@ -101,6 +260,8 @@ ui <- fillPage(
                   max = 20,
                   value = 4,
                   step = 2
+      ),
+      checkboxInput("checkbox", "Show downtime", value = FALSE
       ),
       actionButton(
         inputId = "refresh_data",
@@ -141,7 +302,7 @@ server <- function(input, output, session) {
   
   # # Importing the correct dataset (home)
   # selected <- eventReactive(c(input$refresh_data, input$sensor), {
-  #   if (input$sensor == "Livingroom"){
+  #   if (input$sensor == "Living room"){
   #     dataset <- import_dataset("1pb0uU-8VST4gp8zkbDiO0YNfAKdsnvoKgLZ63juG27I")
   #   }
   #   else if (input$sensor == "Outside"){
@@ -178,46 +339,12 @@ server <- function(input, output, session) {
                         "at",
                         toString(selected()$time[nrow(selected())]),
                         sep = " "))
+
+  # Making the plots
+  # output$temp_plot <- renderPlotly(make_temp_plot(filtered()))
+  output$temp_plot <- renderPlotly(make_temp_plot_downtime(filtered(), selected()))
   
-  output$temp_plot <- renderPlotly({
-    ggplotly(filtered() %>%
-               ggplot(aes(date_time, temp_c)) +
-               # geom_smooth(method = "loess", se = FALSE, span = 0.01, color = "white", size = 0.5) +
-               geom_point(size = 0.5, shape = 16, alpha = 0.8, color = "#ff6bd3") +
-               labs(x = "", y = "ºC") +
-               theme_bw() +
-               theme(
-                 panel.border = element_blank(),
-                 axis.line = element_line(color = "white", size = 1),
-                 panel.grid = element_blank(),
-                 axis.ticks = element_line(color = "white", size = 1),
-                 axis.text = element_text(size = 10, face = "bold", color = "white"),
-                 axis.title = element_text(size = 14, face = "bold", color = "white"),
-                 panel.background = element_rect(fill = "#222222"),
-                 plot.background = element_rect(fill = "#222222")
-               )) %>%
-      config(displayModeBar = FALSE)
-  })
-  
-  output$humidity_plot <- renderPlotly({
-    ggplotly(filtered() %>%
-               ggplot(aes(date_time, humidity)) +
-               # geom_smooth(method = "loess", se = FALSE, span = 0.01, color = "white", size = 0.5) +
-               geom_point(size = 0.5, shape = 16, alpha = 0.8, color = "#42ff55") +
-               labs(x = "Date and time", y = "% Humidity") +
-               theme_bw() +
-               theme(
-                 panel.border = element_blank(),
-                 axis.line = element_line(color = "white", size = 1),
-                 panel.grid = element_blank(),
-                 axis.ticks = element_line(color = "white", size = 1),
-                 axis.text = element_text(size = 10, face = "bold", color = "white"),
-                 axis.title = element_text(size = 14, face = "bold", color = "white"),
-                 panel.background = element_rect(fill = "#222222"),
-                 plot.background = element_rect(fill = "#222222")
-               )) %>%
-      config(displayModeBar = FALSE)
-  })
+  output$humidity_plot <- renderPlotly(make_humid_plot(filtered()))
 
   # Making the "Current temp, humidity, time" banner
   output$current_temp <- renderUI({
