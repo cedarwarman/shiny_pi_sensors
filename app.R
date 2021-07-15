@@ -80,12 +80,6 @@ make_temp_plot_downtime <- function(input_df, original_df) {
   ))
 
   # Making the downtime rectangles
-  cat(
-    file = stderr(), "\n", "Making dataframe, xmins = ", toString(na.omit(cropped_df$date_time[lead(cropped_df$intervals > 4)])), "\n",
-    "xmaxes = ", toString(na.omit(cropped_df$date_time[cropped_df$intervals > 4])), "\n",
-    "ymins = ", toString(min(cropped_df$temp_c)), "\n",
-    "ymaxes = ", toString(max(cropped_df$temp_c))
-  )
   if (length(na.omit(cropped_df$date_time[lead(cropped_df$intervals > 4)])) > 0) {
     rectangles <- data.frame(
       "xmins" = na.omit(cropped_df$date_time[lead(cropped_df$intervals > 4)]),
@@ -138,6 +132,7 @@ make_humid_plot <- function(input_df) {
     ggplot(aes(date_time, humidity)) +
     # geom_smooth(method = "loess", se = FALSE, span = 0.01, color = "white", size = 0.5) +
     geom_point(size = 0.5, shape = 16, alpha = 0.8, color = "#42ff55") +
+    scale_y_continuous(limits = c(0, 100), breaks = seq(0, 100, 20), labels = seq(0, 100, 20)) +
     labs(x = "Date and time", y = "% Humidity") +
     theme_bw() +
     theme(
@@ -176,22 +171,15 @@ make_humid_plot_downtime <- function(input_df, original_df) {
   ))
 
   # Making the downtime rectangles
-  cat(
-    file = stderr(), "\n", "Making dataframe, xmins = ", toString(na.omit(cropped_df$date_time[lead(cropped_df$intervals > 4)])), "\n",
-    "xmaxes = ", toString(na.omit(cropped_df$date_time[cropped_df$intervals > 4])), "\n",
-    "ymins = ", toString(min(cropped_df$humidity)), "\n",
-    "ymaxes = ", toString(max(cropped_df$humidity))
-  )
   if (length(na.omit(cropped_df$date_time[lead(cropped_df$intervals > 4)])) > 0) {
     rectangles <- data.frame(
       "xmins" = na.omit(cropped_df$date_time[lead(cropped_df$intervals > 4)]),
       "xmaxes" = na.omit(cropped_df$date_time[cropped_df$intervals > 4]),
-      "ymins" = min(cropped_df$humidity),
-      "ymaxes" = max(cropped_df$humidity)
+      "ymins" = 0,
+      "ymaxes" = 100
     )
 
     # Making the plot with rectangles
-    cat(file = stderr(), "\n", "Making plot \n ")
     output_plot <- ggplotly(input_df %>%
       ggplot(aes(date_time, humidity)) +
       # geom_smooth(method = "loess", se = FALSE, span = 0.01, color = "white", size = 0.5) +
@@ -207,6 +195,7 @@ make_humid_plot_downtime <- function(input_df, original_df) {
         fill = "orangered3"
       ) +
       geom_point(size = 0.5, shape = 16, alpha = 0.8, color = "#42ff55") +
+      scale_y_continuous(limits = c(0, 100), breaks = seq(0, 100, 20), labels = seq(0, 100, 20)) +
       labs(x = "Date and time", y = "% Humidity") +
       theme_bw() +
       theme(
