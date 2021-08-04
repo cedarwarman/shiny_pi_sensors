@@ -414,9 +414,11 @@ server <- function(input, output, session) {
   })
   
   # Getting the server temp
-  server_temp_value <- reactive(
-    as.double(system("vcgencmd measure_temp | egrep -o '[0-9]*\\.[0-9]*'", intern = TRUE))
-  )
+  server_temp_value <- reactive({
+    as.double(system(paste0("bash ", 
+                            file.path(getwd(), "sh", "get_rpi_temp.sh")), 
+                     intern = TRUE))
+  })
   
   output$server_temp <- renderUI({
     if(server_temp_value() >= 50 & server_temp_value() < 80) {
