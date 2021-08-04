@@ -272,25 +272,35 @@ ui <- fillPage(
       # Lets the user choose the sensor to display (lab)
       selectInput(
         "sensor", "Sensor",
-        c("Forbes East", "Forbes West", "Marley Kelsey", "Marley Cedar")
+        c("Forbes East", "Forbes West", "Forbes Cedar", "Marley Kelsey", "Marley Cedar")
       ),
       # # Lets the user choose the sensor to display (home)
       # selectInput("sensor", "Sensor",
       #             c("Living room", "Outside")
       # ),
       # Lets the user pick the date that the plot shows
-      uiOutput("date_slider"),
+      uiOutput("date_slider"
+      ),
       # Lets the user pick a data sampling interval
-      sliderInput("chosen_interval", "Sample interval (min)",
+      sliderInput(
+        "chosen_interval", 
+        "Sample interval (min)",
         min = 2,
         max = 20,
         value = 4,
         step = 2
       ),
-      checkboxInput("checkbox", "Highlight downtime", value = FALSE),
+      checkboxInput(
+        "checkbox", 
+        "Highlight downtime", 
+        value = FALSE
+      ),
       actionButton(
         inputId = "refresh_data",
         label = "Refresh data"
+      ),
+      uiOutput(
+        "server_temp"
       )
     ),
     column(
@@ -316,6 +326,9 @@ server <- function(input, output, session) {
       }
       else if (input$sensor == "Forbes West") {
         dataset <- import_dataset("1y4H7i5Ay6bmXjTwesw4RoBO3nNCprKDssm3WPZ-BuuQ")
+      }
+      else if (input$sensor == "Forbes Cedar") {
+        dataset <- import_dataset("1NdIdsvgr9CFkNSLgAGN83mdYyXZna62icS9WxeGwZZM")
       }
       else if (input$sensor == "Marley Kelsey") {
         dataset <- import_dataset("1cF2DWhlWZ6CYsZU7B6akx4X9EFrqh33oHst0ZKH6AYA")
@@ -371,7 +384,7 @@ server <- function(input, output, session) {
     toString(selected()$time[nrow(selected())]),
     sep = " "
   ))
-
+  
   # Making the plots
   output$temp_plot <- renderPlotly({
     if (input$checkbox) {
@@ -398,6 +411,35 @@ server <- function(input, output, session) {
   })
   output$current_time <- renderText({
     paste0("Updated: ", current_time())
+  })
+  
+  # Getting the server temp
+  server_temp_value <- reactive(
+    as.double(system("vcgencmd measure_temp | egrep -o '[0-9]*\\.[0-9]*'", intern = TRUE))
+  )
+  
+  output$server_temp <- renderUI({
+    if(server_temp_value() >= 50 & server_temp_value() < 80) {
+      a <- paste0("<br/>", "Server temperature: ",
+                 "<span style=color:#ff8c00;font-weight:bold>",
+                 server_temp_value(),
+                 " ºC",
+                 "</span>")
+    } else if(server_temp_value() >= 80) {
+      a <- paste0("<br/>", "Server temperature: ",
+                  "<span style=color:#fc0303;font-weight:bold>",
+                  server_temp_value(),
+                  " ºC",
+                  "</span>")
+    } else {
+      a <- paste0("<br/>", 
+                  "Server temperature: ",
+                  "<span style=color:#b2fcb1;font-weight:bold>",
+                  server_temp_value(),
+                  " ºC",
+                  "</span>")
+    }
+    HTML(a)
   })
 }
 
