@@ -415,9 +415,8 @@ server <- function(input, output, session) {
   
   # Getting the server temp
   server_temp_value <- reactive({
-    as.double(system(paste0("bash ", 
-                            file.path(getwd(), "sh", "get_rpi_temp.sh")), 
-                     intern = TRUE))
+    # read.table(file = './temperature.txt')[1, 1] # For troubleshooting on laptop
+    read.table(file = './temperature.txt')[1, 1] # For the shiny server
   })
   
   output$server_temp <- renderUI({
