@@ -39,7 +39,10 @@ import_dataset <- function(sheet_id) {
 # This function will make a temperature plot
 make_temp_plot <- function(input_df) {
   output_plot <- ggplotly(input_df %>%
-    ggplot(aes(date_time, temp_c)) +
+    ggplot(aes(date_time, temp_c,
+               # group = 1, # Supposedly necessary in some cases
+               text = paste('Date and Time:<b>', date_time, '</b>',
+                            '<br>Temperature:<b>', temp_c, 'ºC</b>'))) +
     # geom_smooth(method = "loess", se = FALSE, span = 0.01, color = "white", size = 0.5) +
     geom_point(size = 0.5, shape = 16, alpha = 0.8, color = "#ff6bd3") +
     labs(x = "", y = "ºC") +
@@ -53,7 +56,7 @@ make_temp_plot <- function(input_df) {
       axis.title = element_text(size = 14, face = "bold", color = "white"),
       panel.background = element_rect(fill = "#222222"),
       plot.background = element_rect(fill = "#222222")
-    )) %>%
+    ), tooltip = c("text")) %>%
     config(displayModeBar = FALSE)
 
   return(output_plot)
@@ -90,7 +93,9 @@ make_temp_plot_downtime <- function(input_df, original_df) {
 
     # Making the plot with rectangles
     output_plot <- ggplotly(input_df %>%
-      ggplot(aes(date_time, temp_c)) +
+      ggplot(aes(date_time, temp_c,
+                 text = paste('Date and Time:<b>', date_time, '</b>',
+                              '<br>Temperature:<b>', temp_c, 'ºC</b>'))) +
       # geom_smooth(method = "loess", se = FALSE, span = 0.01, color = "white", size = 0.5) +
       geom_rect(
         data = rectangles,
@@ -115,7 +120,7 @@ make_temp_plot_downtime <- function(input_df, original_df) {
         axis.title = element_text(size = 14, face = "bold", color = "white"),
         panel.background = element_rect(fill = "#222222"),
         plot.background = element_rect(fill = "#222222")
-      )) %>%
+      ), tooltip = c("text")) %>%
       config(displayModeBar = FALSE)
 
     return(output_plot)
@@ -129,7 +134,9 @@ make_temp_plot_downtime <- function(input_df, original_df) {
 # This function will make a humidity plot
 make_humid_plot <- function(input_df) {
   output_plot <- ggplotly(input_df %>%
-    ggplot(aes(date_time, humidity)) +
+    ggplot(aes(date_time, humidity,
+               text = paste0('Date and Time: <b>', date_time, '</b>',
+                            '<br>Humidity: <b>', temp_c, '%</b>'))) +
     # geom_smooth(method = "loess", se = FALSE, span = 0.01, color = "white", size = 0.5) +
     geom_point(size = 0.5, shape = 16, alpha = 0.8, color = "#42ff55") +
     scale_y_continuous(limits = c(0, 100), breaks = seq(0, 100, 20), labels = seq(0, 100, 20)) +
@@ -144,7 +151,7 @@ make_humid_plot <- function(input_df) {
       axis.title = element_text(size = 14, face = "bold", color = "white"),
       panel.background = element_rect(fill = "#222222"),
       plot.background = element_rect(fill = "#222222")
-    )) %>%
+    ), tooltip = c("text")) %>%
     config(displayModeBar = FALSE)
 
   return(output_plot)
@@ -181,7 +188,9 @@ make_humid_plot_downtime <- function(input_df, original_df) {
 
     # Making the plot with rectangles
     output_plot <- ggplotly(input_df %>%
-      ggplot(aes(date_time, humidity)) +
+      ggplot(aes(date_time, humidity,
+                 text = paste0('Date and Time: <b>', date_time, '</b>',
+                               '<br>Humidity: <b>', temp_c, '%</b>'))) +
       # geom_smooth(method = "loess", se = FALSE, span = 0.01, color = "white", size = 0.5) +
       geom_rect(
         data = rectangles,
@@ -207,7 +216,7 @@ make_humid_plot_downtime <- function(input_df, original_df) {
         axis.title = element_text(size = 14, face = "bold", color = "white"),
         panel.background = element_rect(fill = "#222222"),
         plot.background = element_rect(fill = "#222222")
-      )) %>%
+      ), tooltip = c("text")) %>%
       config(displayModeBar = FALSE)
 
     return(output_plot)
