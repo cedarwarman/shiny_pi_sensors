@@ -41,8 +41,8 @@ make_temp_plot <- function(input_df) {
   output_plot <- ggplotly(input_df %>%
     ggplot(aes(date_time, temp_c,
                # group = 1, # Supposedly necessary in some cases
-               text = paste('Date and Time:<b>', date_time, '</b>',
-                            '<br>Temperature:<b>', temp_c, 'ºC</b>'))) +
+               text = paste0("Date and Time: <b>", date_time, "</b>",
+                            "<br>Temperature: <b>", temp_c, " ºC</b>"))) +
     # geom_smooth(method = "loess", se = FALSE, span = 0.01, color = "white", size = 0.5) +
     geom_point(size = 0.5, shape = 16, alpha = 0.8, color = "#ff6bd3") +
     labs(x = "", y = "ºC") +
@@ -94,8 +94,8 @@ make_temp_plot_downtime <- function(input_df, original_df) {
     # Making the plot with rectangles
     output_plot <- ggplotly(input_df %>%
       ggplot(aes(date_time, temp_c,
-                 text = paste('Date and Time:<b>', date_time, '</b>',
-                              '<br>Temperature:<b>', temp_c, 'ºC</b>'))) +
+                 text = paste0("Date and Time: <b>", date_time, "</b>",
+                               "<br>Temperature: <b>", temp_c, " ºC</b>"))) +
       # geom_smooth(method = "loess", se = FALSE, span = 0.01, color = "white", size = 0.5) +
       geom_rect(
         data = rectangles,
@@ -104,7 +104,8 @@ make_temp_plot_downtime <- function(input_df, original_df) {
           xmin = xmins,
           xmax = xmaxes,
           ymin = ymins,
-          ymax = ymaxes
+          ymax = ymaxes,
+          text = paste0("Downtime")
         ),
         fill = "orangered3"
       ) +
@@ -135,8 +136,8 @@ make_temp_plot_downtime <- function(input_df, original_df) {
 make_humid_plot <- function(input_df) {
   output_plot <- ggplotly(input_df %>%
     ggplot(aes(date_time, humidity,
-               text = paste0('Date and Time: <b>', date_time, '</b>',
-                            '<br>Humidity: <b>', temp_c, '%</b>'))) +
+               text = paste0("Date and Time: <b>", date_time, "</b>",
+                             "<br>Humidity: <b>", temp_c, "%</b>"))) +
     # geom_smooth(method = "loess", se = FALSE, span = 0.01, color = "white", size = 0.5) +
     geom_point(size = 0.5, shape = 16, alpha = 0.8, color = "#42ff55") +
     scale_y_continuous(limits = c(0, 100), breaks = seq(0, 100, 20), labels = seq(0, 100, 20)) +
@@ -189,8 +190,8 @@ make_humid_plot_downtime <- function(input_df, original_df) {
     # Making the plot with rectangles
     output_plot <- ggplotly(input_df %>%
       ggplot(aes(date_time, humidity,
-                 text = paste0('Date and Time: <b>', date_time, '</b>',
-                               '<br>Humidity: <b>', temp_c, '%</b>'))) +
+                 text = paste0("Date and Time: <b>", date_time, "</b>",
+                               "<br>Humidity: <b>", temp_c, "%</b>"))) +
       # geom_smooth(method = "loess", se = FALSE, span = 0.01, color = "white", size = 0.5) +
       geom_rect(
         data = rectangles,
@@ -199,7 +200,8 @@ make_humid_plot_downtime <- function(input_df, original_df) {
           xmin = xmins,
           xmax = xmaxes,
           ymin = ymins,
-          ymax = ymaxes
+          ymax = ymaxes,
+          text = paste0("Downtime")
         ),
         fill = "orangered3"
       ) +
