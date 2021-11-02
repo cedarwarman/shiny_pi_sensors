@@ -299,9 +299,10 @@ ui <- fillPage(
         inputId = "refresh_data",
         label = "Refresh data"
       ),
-      uiOutput(
-        "server_temp"
-      )
+      # Not relevant on RStudio Connect. Uncomment for Raspberry Pi Server
+      # uiOutput(
+      #   "server_temp"
+      # )
     ),
     column(
       10,
@@ -416,35 +417,36 @@ server <- function(input, output, session) {
     paste0("Updated: ", current_time())
   })
   
-  # Getting the server temp
-  server_temp_value <- reactive({
-    # read.table(file = './temperature.txt')[1, 1] # For troubleshooting on laptop
-    read.table(file = './temperature.txt')[1, 1] # For the shiny server
-  })
-  
-  output$server_temp <- renderUI({
-    if(server_temp_value() >= 50 & server_temp_value() < 80) {
-      a <- paste0("<br/>", "Server temperature: ",
-                 "<span style=color:#ff8c00;font-weight:bold>",
-                 server_temp_value(),
-                 " ºC",
-                 "</span>")
-    } else if(server_temp_value() >= 80) {
-      a <- paste0("<br/>", "Server temperature: ",
-                  "<span style=color:#fc0303;font-weight:bold>",
-                  server_temp_value(),
-                  " ºC",
-                  "</span>")
-    } else {
-      a <- paste0("<br/>", 
-                  "Server temperature: ",
-                  "<span style=color:#b2fcb1;font-weight:bold>",
-                  server_temp_value(),
-                  " ºC",
-                  "</span>")
-    }
-    HTML(a)
-  })
+  # Getting the server temp 
+  # (Not relevant on RStudio Connect. Uncomment for Raspberry Pi Server)
+  # server_temp_value <- reactive({
+  #   # read.table(file = './temperature.txt')[1, 1] # For troubleshooting on laptop
+  #   read.table(file = './temperature.txt')[1, 1] # For the shiny server
+  # })
+  # 
+  # output$server_temp <- renderUI({
+  #   if(server_temp_value() >= 50 & server_temp_value() < 80) {
+  #     a <- paste0("<br/>", "Server temperature: ",
+  #                "<span style=color:#ff8c00;font-weight:bold>",
+  #                server_temp_value(),
+  #                " ºC",
+  #                "</span>")
+  #   } else if(server_temp_value() >= 80) {
+  #     a <- paste0("<br/>", "Server temperature: ",
+  #                 "<span style=color:#fc0303;font-weight:bold>",
+  #                 server_temp_value(),
+  #                 " ºC",
+  #                 "</span>")
+  #   } else {
+  #     a <- paste0("<br/>", 
+  #                 "Server temperature: ",
+  #                 "<span style=color:#b2fcb1;font-weight:bold>",
+  #                 server_temp_value(),
+  #                 " ºC",
+  #                 "</span>")
+  #   }
+  #   HTML(a)
+  # })
 }
 
 
