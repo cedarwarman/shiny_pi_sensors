@@ -137,7 +137,7 @@ make_humid_plot <- function(input_df) {
   output_plot <- ggplotly(input_df %>%
     ggplot(aes(date_time, humidity,
                text = paste0("Date and Time: <b>", date_time, "</b>",
-                             "<br>Humidity: <b>", temp_c, "%</b>"))) +
+                             "<br>Humidity: <b>", humidity, "%</b>"))) +
     # geom_smooth(method = "loess", se = FALSE, span = 0.01, color = "white", size = 0.5) +
     geom_point(size = 0.5, shape = 16, alpha = 0.8, color = "#42ff55") +
     scale_y_continuous(limits = c(0, 100), breaks = seq(0, 100, 20), labels = seq(0, 100, 20)) +
@@ -191,7 +191,7 @@ make_humid_plot_downtime <- function(input_df, original_df) {
     output_plot <- ggplotly(input_df %>%
       ggplot(aes(date_time, humidity,
                  text = paste0("Date and Time: <b>", date_time, "</b>",
-                               "<br>Humidity: <b>", temp_c, "%</b>"))) +
+                               "<br>Humidity: <b>", humidity, "%</b>"))) +
       # geom_smooth(method = "loess", se = FALSE, span = 0.01, color = "white", size = 0.5) +
       geom_rect(
         data = rectangles,
